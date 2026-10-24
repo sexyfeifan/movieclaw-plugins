@@ -31,6 +31,7 @@
     if(site.history?.length){const history=el('details',null,'maintenance-history');history.open=Boolean(opened.get(site.site_id)?.history);history.addEventListener('toggle',()=>opened.set(site.site_id,{...opened.get(site.site_id),history:history.open}));history.append(el('summary','最近执行记录'));const list=el('ul');for(const h of site.history)list.append(el('li',time(h.at)+' · '+h.label+' · '+h.message));history.append(list);root.append(history);}return root;
   }
   function render(){if(!data)return;if(!dirty){$('maint-timezone').value=data.timezone;$('maint-start').value=data.start;$('maint-end').value=data.end;drafts.clear();}
+    const usable=data.sites.filter(s=>s.usable),chosen=usable.filter(s=>(drafts.get(s.site_id)||s.config).enabled).length;$('maint-all').checked=usable.length>0&&chosen===usable.length;$('maint-all').indeterminate=chosen>0&&chosen<usable.length;
     $('maint-sites').replaceChildren(...data.sites.map(card));if(!data.sites.length)$('maint-sites').append(el('p','尚未添加站点，请先到“添加站点”接入自己的站点。','notice'));
   }
   async function refresh(force=false){if($('maintenance-pane').hidden&&!force)return;if(loading||(!force&&Date.now()-lastRead<5000))return;
