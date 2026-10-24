@@ -63,6 +63,7 @@ async def apply(ctx):
                 "authentication": "账号和 Cookie 由本服务器原生站点管理保存", "custom_count": len(workspace.state["custom"])}
 
     router.routes.extend(management_router(ctx, officials, pack_sites, registrations, workspace).routes)
+    await workspace.maintenance.start()
     router.routes.extend(workspace_router(workspace).routes)
     router.routes.extend((await assistant_router(ctx, workspace)).routes)
     ctx.use(PLUGIN_ROUTES).mount(ctx, router)
