@@ -88,6 +88,13 @@ class Execution(unittest.IsolatedAsyncioTestCase):
     async def test_ambiguous_response_never_claims_success(self):
         self.site=FakeSite([(200,LOGIN),(200,'<p>签到中心</p>')])
         await self.service.run('fixture');self.assertEqual((await self.service.view())['sites'][0]['status'],'uncertain')
+    async def test_historical_or_paid_forms_are_never_submitted(self):
+        for field in ['<input type="hidden" name="date" value="2026-10-22">','<input type="hidden" name="action" value="retroactive">','<input type="hidden" name="card" value="1">']:
+            self.service.state['records'].clear()
+            self.site=FakeSite([(200,LOGIN),(200,FORM.replace('<button',field+'<button'))])
+            await self.service.run('fixture')
+            self.assertEqual(len(self.site.calls),2)
+            self.assertEqual((await self.service.view())['sites'][0]['status'],'uncertain')
     async def test_random_daily_slots_restart_unique_and_revision(self):
         self.rows.extend({**self.rows[0],'site_id':f's{i}'} for i in range(25))
         cfg=self.config();cfg['sites']={r['site_id']:{'enabled':True,'action':'sign','rule':None} for r in self.rows}

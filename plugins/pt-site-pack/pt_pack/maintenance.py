@@ -271,6 +271,7 @@ class Maintenance:
         for form in doc.css('form'):
             target=same_url(str(response.url),form.attrib.get('action') or str(response.url))
             if urlparse(target).path!=urlparse(same_url(site.base_url,path)).path:continue
+            if re.search(r'retro|补签|補簽|消耗|购买|購買|purchase|exchange|delete|remove', target+' '+(form.xpath('string(.)').get() or ''),re.I):continue
             if form.css('input:not([type=hidden]):not([type=submit]):not([type=button]),textarea,select'):continue
             if form.attrib.get('method','get').lower()!='post':continue
             if not form.css('input[type=submit],button[type=submit],button:not([type])'):continue
@@ -278,8 +279,12 @@ class Maintenance:
             for field in form.css('input[type=hidden][name]'):
                 name=field.attrib['name'];value=field.attrib.get('value','')
                 if len(name)>80 or len(value)>4096:raise ValueError('签到表单字段超出限制')
+                if re.search(r'date|retro|card|cost|price|amount|buy|purchase|passkey|password',name,re.I):
+                    values=None;break
+                if name.lower()=='action' and value.lower() not in ('attendance','attend','sign','signin','checkin','check-in'):
+                    values=None;break
                 values[name]=value
-            forms.append((target,values))
+            if values is not None:forms.append((target,values))
         if len(forms)!=1:return 'uncertain','未找到唯一且无需验证码的签到表单，未猜测提交'
         response=await self.request(site,forms[0][0],method='POST',data=forms[0][1])
         bad=inspect_html(response)
